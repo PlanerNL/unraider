@@ -11,7 +11,10 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import nl.planernl.unraider.R
+import nl.planernl.unraider.data.CertInfo
+import nl.planernl.unraider.data.CertificateNotTrustedException
 import nl.planernl.unraider.data.Container
+import nl.planernl.unraider.data.HttpsRedirectException
 import nl.planernl.unraider.data.ContainerAction
 import nl.planernl.unraider.data.Dashboard
 import nl.planernl.unraider.data.DiskOverview
@@ -81,8 +84,30 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     // ---------- Instellingen ----------
 
-    suspend fun testConnection(candidate: ServerConfig): Result<UiText> =
-        runCatching { UnraidRepository(UnraidClient(candidate)).testConnection() }
+    sealed interface TestResult {
+        /** [config] kan afwijken van wat je invulde (bijv. omgezet naar https). */
+        data class Success(val serverName: UiText, val config: ServerConfig) : TestResult
+        data class Untrusted(val cert: CertInfo, val pinChanged: Boolean, val config: ServerConfig) : TestResult
+        data class Failure(val error: UiText, val config: ServerConfig) : TestResult
+    }
+
+    /** Test de verbinding; volgt zelf een omleiding naar https en meldt onbekende certificaten. */
+    suspend fun testConnection(candidate: ServerConfig): TestResult {
+        var cfg = candidate
+        repeat(2) {
+            try {
+                return TestResult.Success(UnraidRepository(UnraidClient(cfg)).testConnection(), cfg)
+            } catch (e: HttpsRedirectException) {
+                if (cfg.baseUrl == e.newBaseUrl) return TestResult.Failure(e.text, cfg)
+                cfg = cfg.copy(address = e.newBaseUrl)
+            } catch (e: CertificateNotTrustedException) {
+                return TestResult.Untrusted(e.cert, e.pinChanged, cfg)
+            } catch (e: Exception) {
+                return TestResult.Failure(e.toUiText(), cfg)
+            }
+        }
+        return TestResult.Failure(UiText.Res(R.string.err_redirect, cfg.baseUrl), cfg)
+    }
 
     fun saveConfig(cfg: ServerConfig) {
         viewModelScope.launch { settings.save(cfg) }

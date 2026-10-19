@@ -2,7 +2,9 @@ package nl.planernl.unraider.ui.screens
 
 import android.annotation.SuppressLint
 import android.graphics.Bitmap
+import android.net.http.SslError
 import android.webkit.CookieManager
+import android.webkit.SslErrorHandler
 import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
@@ -22,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.viewinterop.AndroidView
 import nl.planernl.unraider.R
+import nl.planernl.unraider.data.CertTrust
 import nl.planernl.unraider.ui.ErrorState
 
 /**
@@ -30,7 +33,7 @@ import nl.planernl.unraider.ui.ErrorState
  */
 @SuppressLint("SetJavaScriptEnabled")
 @Composable
-fun WebGuiScreen(baseUrl: String) {
+fun WebGuiScreen(baseUrl: String, certPin: String?) {
     var webView by remember { mutableStateOf<WebView?>(null) }
     var canGoBack by remember { mutableStateOf(false) }
     var loading by remember { mutableStateOf(true) }
@@ -38,6 +41,7 @@ fun WebGuiScreen(baseUrl: String) {
 
     // Vooraf ophalen: de WebView-callbacks zijn geen composables
     val unreachable = stringResource(R.string.webgui_unreachable)
+    val certRejected = stringResource(R.string.webgui_cert_rejected)
 
     BackHandler(enabled = canGoBack) { webView?.goBack() }
 
@@ -67,6 +71,18 @@ fun WebGuiScreen(baseUrl: String) {
 
                         override fun doUpdateVisitedHistory(view: WebView, url: String?, isReload: Boolean) {
                             canGoBack = view.canGoBack()
+                        }
+
+                        override fun onReceivedSslError(view: WebView, handler: SslErrorHandler, err: SslError) {
+                            // Alleen het certificaat accepteren dat je in de instellingen hebt goedgekeurd
+                            val cert = CertTrust.fromSslCertificate(err.certificate)
+                            if (certPin != null && cert != null && CertTrust.fingerprint(cert) == certPin) {
+                                handler.proceed()
+                            } else {
+                                handler.cancel()
+                                loading = false
+                                error = certRejected
+                            }
                         }
 
                         override fun onReceivedError(view: WebView, request: WebResourceRequest, err: WebResourceError) {

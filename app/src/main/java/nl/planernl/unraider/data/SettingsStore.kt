@@ -12,6 +12,8 @@ private val Context.dataStore by preferencesDataStore(name = "instellingen")
 data class ServerConfig(
     val address: String = "",
     val apiKey: String = "",
+    /** SHA-256-vingerafdruk van het goedgekeurde servercertificaat (Use SSL/TLS: Yes). */
+    val certPin: String? = null,
 ) {
     val isComplete: Boolean get() = address.isNotBlank() && apiKey.isNotBlank()
 
@@ -27,11 +29,13 @@ data class ServerConfig(
 class SettingsStore(private val context: Context) {
     private val keyAddress = stringPreferencesKey("adres")
     private val keyApiKey = stringPreferencesKey("api_key")
+    private val keyCertPin = stringPreferencesKey("cert_pin")
 
     val config: Flow<ServerConfig> = context.dataStore.data.map { prefs ->
         ServerConfig(
             address = prefs[keyAddress].orEmpty(),
             apiKey = prefs[keyApiKey].orEmpty(),
+            certPin = prefs[keyCertPin],
         )
     }
 
@@ -39,6 +43,7 @@ class SettingsStore(private val context: Context) {
         context.dataStore.edit { prefs ->
             prefs[keyAddress] = config.address.trim()
             prefs[keyApiKey] = config.apiKey.trim()
+            if (config.certPin != null) prefs[keyCertPin] = config.certPin else prefs.remove(keyCertPin)
         }
     }
 }

@@ -149,7 +149,7 @@ private fun MainScaffold(vm: MainViewModel, cfg: ServerConfig) {
             composable(Tab.SCHIJVEN.route) { DisksScreen(vm) }
             composable(Tab.DOCKER.route) { DockerScreen(vm) }
             composable(Tab.VMS.route) { VmsScreen(vm) }
-            composable(Tab.WEBGUI.route) { WebGuiScreen(cfg.baseUrl) }
+            composable(Tab.WEBGUI.route) { WebGuiScreen(cfg.baseUrl, cfg.certPin) }
             composable(ROUTE_SETTINGS) { SetupScreen(vm, cfg, onDone = { nav.popBackStack() }) }
         }
     }

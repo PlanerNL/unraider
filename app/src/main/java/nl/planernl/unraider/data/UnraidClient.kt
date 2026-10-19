@@ -22,9 +22,19 @@ import java.net.UnknownHostException
 import java.util.concurrent.TimeUnit
 import javax.net.ssl.SSLException
 
-class UnraidException(val text: UiText) : Exception((text as? UiText.Raw)?.value ?: "UnraidException") {
+open class UnraidException(val text: UiText) : Exception((text as? UiText.Raw)?.value ?: "UnraidException") {
     constructor(message: String) : this(UiText.Raw(message))
 }
+
+/** De server toont een certificaat dat (nog) niet vertrouwd wordt. */
+class CertificateNotTrustedException(val cert: CertInfo, val pinChanged: Boolean) : UnraidException(
+    UiText.Res(if (pinChanged) R.string.err_cert_changed else R.string.err_cert_untrusted)
+)
+
+/** De server stuurt http door naar https; de app moet het https-adres gebruiken. */
+class HttpsRedirectException(val newBaseUrl: String) : UnraidException(
+    UiText.Res(R.string.err_redirect_https, newBaseUrl)
+)
 
 /**
  * Minimale GraphQL-client voor de Unraid API (/graphql).
@@ -50,12 +60,27 @@ class UnraidClient(private val config: ServerConfig) {
                 .post(body.toRequestBody(JSON_MEDIA))
                 .build()
 
-            val (code, text) = try {
-                http.newCall(request).execute().use { response ->
-                    response.code to response.body?.string().orEmpty()
+            val (code, location, text) = try {
+                httpFor(config.certPin).newCall(request).execute().use { response ->
+                    Triple(response.code, response.header("Location"), response.body?.string().orEmpty())
                 }
             } catch (e: IOException) {
+                CertTrust.findUntrusted(e)?.let { untrusted ->
+                    val cert = untrusted.cert
+                    if (cert != null) throw CertificateNotTrustedException(CertTrust.info(cert), config.certPin != null)
+                }
                 throw UnraidException(friendlyNetworkError(e))
+            }
+
+            // Omleidingen niet automatisch volgen: OkHttp zou van de POST een GET maken
+            // en de query kwijtraken. Een omleiding naar https melden we aan de app.
+            if (code in 300..399) {
+                val target = location?.let { runCatching { java.net.URI(config.baseUrl).resolve(it) }.getOrNull() }
+                if (target != null && target.scheme == "https") {
+                    val port = if (target.port == -1 || target.port == 443) "" else ":${target.port}"
+                    throw HttpsRedirectException("https://${target.host}$port")
+                }
+                throw UnraidException(UiText.Res(R.string.err_redirect, location ?: "?"))
             }
 
             val root = try {
@@ -106,10 +131,18 @@ class UnraidClient(private val config: ServerConfig) {
     companion object {
         private val JSON_MEDIA = "application/json".toMediaType()
 
-        private val http: OkHttpClient = OkHttpClient.Builder()
+        private val baseHttp: OkHttpClient = OkHttpClient.Builder()
             .connectTimeout(10, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)
+            .followRedirects(false)
+            .followSslRedirects(false)
             .build()
+
+        // Eén client per vastgezet certificaat, zodat verbindingen hergebruikt worden
+        private val clients = java.util.concurrent.ConcurrentHashMap<String, OkHttpClient>()
+
+        private fun httpFor(pin: String?): OkHttpClient =
+            clients.getOrPut(pin ?: "") { CertTrust.client(baseHttp, pin) }
     }
 }
 
