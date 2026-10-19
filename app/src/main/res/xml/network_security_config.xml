@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Gewoon HTTP is toegestaan omdat de verbinding via Tailscale (WireGuard) al
+  versleuteld is. De server heeft een 100.x-adres of een MagicDNS-naam, dus een
+  lijst met vaste domeinen is niet praktisch.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>
