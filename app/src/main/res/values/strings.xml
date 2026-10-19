@@ -194,7 +194,6 @@
     <string name="stat_used">Used</string>
     <string name="stat_free">Free</string>
     <string name="stat_hottest">Hottest</string>
-    <string name="a11y_disk_bar">Usage per data disk; the width of each piece is the disk size</string>
     <string name="a11y_cpu_chart">CPU usage over the last 5 minutes, now %1$d percent</string>
     <string name="a11y_toggle">Turn %1$s on or off</string>
     <string name="a11y_open_in_webgui">Open %1$s in the WebGUI</string>

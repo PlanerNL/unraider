@@ -194,7 +194,6 @@
     <string name="stat_used">Gebruikt</string>
     <string name="stat_free">Vrij</string>
     <string name="stat_hottest">Warmste</string>
-    <string name="a11y_disk_bar">Gebruik per dataschijf; de breedte van elk stuk is de grootte van de schijf</string>
     <string name="a11y_cpu_chart">CPU-gebruik over de laatste 5 minuten, nu %1$d procent</string>
     <string name="a11y_toggle">%1$s aan of uit zetten</string>
     <string name="a11y_open_in_webgui">%1$s openen in de WebGUI</string>

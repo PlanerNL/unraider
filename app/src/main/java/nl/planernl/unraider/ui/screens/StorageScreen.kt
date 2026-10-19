@@ -52,7 +52,6 @@ import nl.planernl.unraider.data.formatCount
 import nl.planernl.unraider.data.formatKb
 import nl.planernl.unraider.data.statusText
 import nl.planernl.unraider.ui.AutoRefresh
-import nl.planernl.unraider.ui.BarSegment
 import nl.planernl.unraider.ui.Bar
 import nl.planernl.unraider.ui.Chassis
 import nl.planernl.unraider.ui.ChassisRow
@@ -68,7 +67,6 @@ import nl.planernl.unraider.ui.RowDivider
 import nl.planernl.unraider.ui.ScreenHeader
 import nl.planernl.unraider.ui.ScreenList
 import nl.planernl.unraider.ui.SectionLabel
-import nl.planernl.unraider.ui.SegmentedBar
 import nl.planernl.unraider.ui.SmallSpinner
 import nl.planernl.unraider.ui.formatTime
 import nl.planernl.unraider.ui.theme.Rack
@@ -144,12 +142,43 @@ private fun arrayLine(data: DiskOverview, server: String?): String {
 @Composable
 fun StorageSummary(data: DiskOverview, onClick: (() -> Unit)? = null) {
     val hottest = data.all.filter { it.temp != null }.maxByOrNull { it.temp ?: 0 }
+    val used = data.capacityUsedKb
+    val total = data.capacityTotalKb
+    val fraction = if (used != null && total != null && total > 0) used.toFloat() / total else null
+
     Panel(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier) {
+        // Kop: percentage groot, absolute getallen rustig ernaast
+        Row(verticalAlignment = Alignment.Bottom) {
+            Text(
+                fraction?.let { "${(it * 100).toInt()}%" } ?: "–",
+                style = MaterialTheme.typography.headlineMedium,
+                modifier = Modifier.weight(1f),
+            )
+            Text(
+                stringResource(R.string.mem_of, formatKb(used), formatKb(total)),
+                style = MaterialTheme.typography.bodyMedium,
+                color = Rack.textSecondary,
+                modifier = Modifier.padding(bottom = 4.dp),
+            )
+        }
+        Spacer(Modifier.height(8.dp))
+        // Eén doorlopende capaciteitsbalk; het gebruik per schijf staat in de lijst
+        Bar(
+            fraction ?: 0f,
+            when {
+                (fraction ?: 0f) >= 0.95f -> Rack.critical
+                (fraction ?: 0f) >= 0.9f -> Rack.warning
+                else -> Rack.accent
+            },
+            Modifier.fillMaxWidth(),
+            height = 6.dp,
+        )
+        Spacer(Modifier.height(14.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Stat(stringResource(R.string.stat_used), formatKb(data.capacityUsedKb), Modifier.weight(1f))
+            Stat(stringResource(R.string.stat_used), formatKb(used), Modifier.weight(1f))
             Stat(
                 stringResource(R.string.stat_free),
-                formatKb(data.capacityTotalKb?.let { t -> data.capacityUsedKb?.let { t - it } }),
+                formatKb(total?.let { t -> used?.let { t - it } }),
                 Modifier.weight(1f),
             )
             Stat(
@@ -159,16 +188,7 @@ fun StorageSummary(data: DiskOverview, onClick: (() -> Unit)? = null) {
                 color = hottest?.let { tempColor(it) } ?: Rack.text,
             )
         }
-        Spacer(Modifier.height(14.dp))
-        val segments = data.data.map {
-            BarSegment(
-                weight = (it.sizeKb ?: 1L).toFloat(),
-                fraction = it.usedFraction ?: 0f,
-                color = Rack.fill(it.health),
-            )
-        }
-        SegmentedBar(segments, stringResource(R.string.a11y_disk_bar))
-        Spacer(Modifier.height(10.dp))
+        Spacer(Modifier.height(12.dp))
         val p = data.parity
         val line = when {
             data.warnings > 0 -> pluralStringResource(R.plurals.warnings_count, data.warnings, data.warnings)
@@ -188,7 +208,7 @@ fun StorageSummary(data: DiskOverview, onClick: (() -> Unit)? = null) {
 private fun Stat(label: String, value: String, modifier: Modifier, color: Color = Rack.text) {
     Column(modifier) {
         Text(label, style = MaterialTheme.typography.bodySmall, color = Rack.textSecondary)
-        Text(value, style = MaterialTheme.typography.headlineSmall, color = color)
+        Text(value, style = MaterialTheme.typography.titleLarge, color = color, maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
 }
 
