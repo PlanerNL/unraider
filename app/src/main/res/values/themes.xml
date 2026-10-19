@@ -3,5 +3,6 @@
     <!-- AppCompat-thema is vereist voor AppCompatActivity (taalkeuze per app) -->
     <style name="Theme.Unraider" parent="Theme.AppCompat.DayNight.NoActionBar">
         <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:windowBackground">@color/rack_background</item>
     </style>
 </resources>

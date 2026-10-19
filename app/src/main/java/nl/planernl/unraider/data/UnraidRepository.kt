@@ -234,7 +234,7 @@ class UnraidRepository(private val client: UnraidClient) {
 
     suspend fun containers(): List<Container> {
         val data = client.queryWithFallback(
-            primary = "query { docker { containers { id names image state status autoStart webUiUrl isUpdateAvailable } } }",
+            primary = "query { docker { containers { id names image state status autoStart webUiUrl isUpdateAvailable iconUrl } } }",
             fallback = "query { docker { containers { id names image state status autoStart } } }",
         )
         return data.obj("docker")?.objects("containers").orEmpty()
@@ -248,6 +248,7 @@ class UnraidRepository(private val client: UnraidClient) {
                     autoStart = c.bool("autoStart"),
                     webUiUrl = c.str("webUiUrl")?.ifBlank { null },
                     updateAvailable = c.bool("isUpdateAvailable"),
+                    iconUrl = c.str("iconUrl")?.takeIf { it.startsWith("http") || it.startsWith("/") },
                 )
             }
             .sortedWith(compareBy<Container> { !it.running }.thenBy { it.name.lowercase() })
@@ -286,6 +287,151 @@ class UnraidRepository(private val client: UnraidClient) {
             VmAction.REBOOT -> "reboot"
         }
         client.query("mutation(\$id: PrefixedID!) { vm { $field(id: \$id) } }", idVariable(id))
+    }
+
+    // ---------- Live metrics ----------
+
+    /**
+     * Eén meting. Netwerk en temperaturen zitten pas in nieuwere API-versies;
+     * ontbreken ze, dan valt de query terug op alleen CPU en geheugen.
+     */
+    suspend fun metricsSample(): MetricsSample {
+        val data = client.queryWithFallback(
+            primary = """
+                query {
+                  metrics {
+                    cpu { percentTotal }
+                    memory { total used percentTotal }
+                    network { name rxSec txSec }
+                    temperature { sensors { name type current { value } } }
+                  }
+                }
+            """.trimIndent(),
+            fallback = "query { metrics { cpu { percentTotal } memory { total used percentTotal } } }",
+        )
+        val m = data.obj("metrics") ?: throw UnraidException(UiText.Res(R.string.err_no_data))
+        val mem = m.obj("memory")
+        val nets = m.objects("network").filter { it.str("name") != "lo" }
+        val sensors = m.obj("temperature")?.objects("sensors").orEmpty()
+        fun sensor(vararg types: String) = sensors
+            .filter { it.str("type") in types }
+            .mapNotNull { it.obj("current")?.double("value") }
+            .maxOrNull()
+
+        return MetricsSample(
+            time = System.currentTimeMillis(),
+            cpuPercent = m.obj("cpu")?.double("percentTotal"),
+            memPercent = mem?.double("percentTotal"),
+            memUsedBytes = mem?.long("used"),
+            memTotalBytes = mem?.long("total"),
+            rxBytesPerSec = nets.takeIf { it.isNotEmpty() }?.sumOf { it.double("rxSec") ?: 0.0 },
+            txBytesPerSec = nets.takeIf { it.isNotEmpty() }?.sumOf { it.double("txSec") ?: 0.0 },
+            cpuTemp = sensor("CPU_PACKAGE", "CPU_CORE"),
+            boardTemp = sensor("MOTHERBOARD", "CHIPSET"),
+        )
+    }
+
+    /** Naam, versie, opstarttijd en aantallen ongelezen meldingen. */
+    suspend fun serverInfo(): ServerInfo = coroutineScope {
+        val varsJob = async { runCatching { client.query("query { vars { name version } }").obj("vars") }.getOrNull() }
+        val osJob = async { runCatching { client.query("query { info { os { hostname uptime } } }").obj("info")?.obj("os") }.getOrNull() }
+        val notifJob = async {
+            runCatching {
+                client.query("query { notifications { overview { unread { info warning alert } } } }")
+                    .obj("notifications")?.obj("overview")?.obj("unread")
+            }.getOrNull()
+        }
+        val vars = varsJob.await()
+        val os = osJob.await()
+        val unread = notifJob.await()
+        if (vars == null && os == null && unread == null) throw UnraidException(UiText.Res(R.string.err_no_data))
+        ServerInfo(
+            name = vars?.str("name") ?: os?.str("hostname"),
+            version = vars?.str("version"),
+            bootTime = os?.str("uptime"),
+            unreadAlerts = unread?.int("alert") ?: 0,
+            unreadWarnings = unread?.int("warning") ?: 0,
+            unreadInfo = unread?.int("info") ?: 0,
+        )
+    }
+
+    // ---------- Shares ----------
+
+    suspend fun shares(): List<ShareInfo> {
+        val data = client.queryWithFallback(
+            primary = "query { shares { name comment used free cache } }",
+            fallback = "query { shares { name used free } }",
+        )
+        return data.objects("shares")
+            .mapNotNull { s ->
+                val name = s.str("name") ?: return@mapNotNull null
+                ShareInfo(
+                    name = name,
+                    comment = s.str("comment")?.ifBlank { null },
+                    usedKb = s.long("used"),
+                    freeKb = s.long("free"),
+                    usesCache = s.bool("cache"),
+                )
+            }
+            .sortedByDescending { it.usedKb ?: 0 }
+    }
+
+    // ---------- Plugins ----------
+
+    suspend fun plugins(): List<PluginInfo> {
+        val data = client.query("query { installedUnraidPlugins }")
+        return data.strings("installedUnraidPlugins")
+            .filter { it.endsWith(".plg") }
+            .map { PluginInfo(it) }
+            .sortedBy { it.displayName.lowercase() }
+    }
+
+    // ---------- Meldingen ----------
+
+    suspend fun unreadNotifications(limit: Int = 100): List<NotificationItem> {
+        val data = client.query(
+            """
+            query {
+              notifications {
+                list(filter: { type: UNREAD, offset: 0, limit: $limit }) {
+                  id title subject description importance timestamp formattedTimestamp link
+                }
+              }
+            }
+            """.trimIndent()
+        )
+        return data.obj("notifications")?.objects("list").orEmpty().map(::parseNotification)
+    }
+
+    /** Alleen ongelezen waarschuwingen en alarmen, voor de pushmeldingen. */
+    suspend fun unreadAlerts(): List<NotificationItem> =
+        try {
+            val data = client.query(
+                "query { notifications { warningsAndAlerts { id title subject description importance timestamp formattedTimestamp link } } }"
+            )
+            data.obj("notifications")?.objects("warningsAndAlerts").orEmpty().map(::parseNotification)
+        } catch (e: UnraidException) {
+            // Oudere API zonder warningsAndAlerts
+            unreadNotifications(50).filter { it.importance != "INFO" }
+        }
+
+    private fun parseNotification(o: JsonObject) = NotificationItem(
+        id = o.str("id").orEmpty(),
+        title = o.str("title").orEmpty(),
+        subject = o.str("subject").orEmpty(),
+        description = o.str("description").orEmpty(),
+        importance = o.str("importance") ?: "INFO",
+        timestamp = o.str("timestamp"),
+        formattedTimestamp = o.str("formattedTimestamp"),
+        link = o.str("link")?.ifBlank { null },
+    )
+
+    suspend fun archiveNotification(id: String) {
+        client.query("mutation(\$id: PrefixedID!) { archiveNotification(id: \$id) { id } }", idVariable(id))
+    }
+
+    suspend fun archiveAllNotifications() {
+        client.query("mutation { archiveAll { unread { total } } }")
     }
 
     private fun idVariable(id: String) = buildJsonObject { put("id", id) }

@@ -212,6 +212,8 @@ data class Container(
     val autoStart: Boolean?,
     val webUiUrl: String?,
     val updateAvailable: Boolean?,
+    /** Icoon uit de Docker-template (meestal een externe URL). */
+    val iconUrl: String? = null,
 ) {
     val running: Boolean get() = state == "RUNNING"
     val paused: Boolean get() = state == "PAUSED"
@@ -265,3 +267,95 @@ fun formatCount(n: Long?): String {
         else -> n.toString()
     }
 }
+
+// ---- Live systeemgegevens ----
+
+/** Eén meting van CPU, geheugen, netwerk en temperaturen. */
+data class MetricsSample(
+    val time: Long,
+    val cpuPercent: Double?,
+    val memPercent: Double?,
+    val memUsedBytes: Long?,
+    val memTotalBytes: Long?,
+    /** Bytes per seconde, opgeteld over alle interfaces behalve loopback. */
+    val rxBytesPerSec: Double?,
+    val txBytesPerSec: Double?,
+    val cpuTemp: Double?,
+    val boardTemp: Double?,
+)
+
+/** Rollend venster met metingen voor de grafieken. */
+data class LiveMetrics(
+    val samples: List<MetricsSample> = emptyList(),
+) {
+    val latest: MetricsSample? get() = samples.lastOrNull()
+    val cpuSeries: List<Float> get() = samples.mapNotNull { it.cpuPercent?.toFloat() }
+
+    companion object {
+        /** 150 metingen van 2 seconden = 5 minuten. */
+        const val CAPACITY = 150
+        const val INTERVAL_MS = 2_000L
+    }
+}
+
+data class ServerInfo(
+    val name: String?,
+    val version: String?,
+    val bootTime: String?,
+    val unreadAlerts: Int,
+    val unreadWarnings: Int,
+    val unreadInfo: Int,
+) {
+    val unreadTotal: Int get() = unreadAlerts + unreadWarnings + unreadInfo
+}
+
+data class ShareInfo(
+    val name: String,
+    val comment: String?,
+    val usedKb: Long?,
+    val freeKb: Long?,
+    val usesCache: Boolean?,
+)
+
+data class NotificationItem(
+    val id: String,
+    val title: String,
+    val subject: String,
+    val description: String,
+    /** ALERT, WARNING of INFO */
+    val importance: String,
+    val timestamp: String?,
+    val formattedTimestamp: String?,
+    val link: String?,
+)
+
+data class PluginInfo(
+    /** Bestandsnaam, bijv. "community.applications.plg" */
+    val file: String,
+) {
+    /** Map-/basisnaam zoals Unraid hem gebruikt: "community.applications". */
+    val baseName: String get() = file.removeSuffix(".plg")
+
+    val displayName: String
+        get() = KNOWN_NAMES[baseName] ?: baseName
+            .split('.', '-', '_')
+            .filter { it.isNotBlank() && it.lowercase() != "dynamix" }
+            .joinToString(" ") { part -> part.replaceFirstChar { it.uppercase() } }
+            .ifBlank { baseName }
+
+    private companion object {
+        val KNOWN_NAMES = mapOf(
+            "dynamix.unraid.net" to "Unraid Connect",
+            "unraid.net" to "Unraid Connect",
+            "ca.mover.tuning" to "Mover Tuning",
+            "ca.update.applications" to "Auto Update Applications",
+            "dynamix.system.temp" to "System Temperature",
+            "dynamix.system.autofan" to "Auto Fan Control",
+            "dynamix.cache.dirs" to "Cache Directories",
+            "dynamix.file.manager" to "File Manager",
+        )
+    }
+}
+
+fun formatRate(bytesPerSec: Double?): String =
+    bytesPerSec?.let { formatBytes(it.toLong()) + "/s" } ?: "–"

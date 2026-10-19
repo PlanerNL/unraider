@@ -33,7 +33,8 @@ import nl.planernl.unraider.ui.ErrorState
  */
 @SuppressLint("SetJavaScriptEnabled")
 @Composable
-fun WebGuiScreen(baseUrl: String, certPin: String?) {
+fun WebGuiScreen(baseUrl: String, certPin: String?, path: String = "") {
+    val startUrl = baseUrl + path
     var webView by remember { mutableStateOf<WebView?>(null) }
     var canGoBack by remember { mutableStateOf(false) }
     var loading by remember { mutableStateOf(true) }
@@ -92,19 +93,20 @@ fun WebGuiScreen(baseUrl: String, certPin: String?) {
                             }
                         }
                     }
-                    loadUrl(baseUrl)
+                    setBackgroundColor(android.graphics.Color.parseColor("#141619"))
+                    loadUrl(startUrl)
                     webView = this
                 }
             },
             onRelease = { it.destroy() },
         )
 
-        if (loading) LinearProgressIndicator(Modifier.fillMaxWidth().align(Alignment.TopCenter))
+        if (loading) LinearProgressIndicator(Modifier.fillMaxWidth().align(Alignment.TopCenter), color = nl.planernl.unraider.ui.theme.Rack.accent)
 
         error?.let { msg ->
             ErrorState(msg) {
                 error = null
-                webView?.loadUrl(baseUrl)
+                webView?.loadUrl(startUrl)
             }
         }
     }

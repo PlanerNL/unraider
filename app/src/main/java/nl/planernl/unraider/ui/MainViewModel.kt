@@ -5,6 +5,8 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -16,9 +18,13 @@ import nl.planernl.unraider.data.CertificateNotTrustedException
 import nl.planernl.unraider.data.Container
 import nl.planernl.unraider.data.HttpsRedirectException
 import nl.planernl.unraider.data.ContainerAction
-import nl.planernl.unraider.data.Dashboard
 import nl.planernl.unraider.data.DiskOverview
+import nl.planernl.unraider.data.LiveMetrics
 import nl.planernl.unraider.data.Load
+import nl.planernl.unraider.data.NotificationItem
+import nl.planernl.unraider.data.PluginInfo
+import nl.planernl.unraider.data.ServerInfo
+import nl.planernl.unraider.data.ShareInfo
 import nl.planernl.unraider.data.ParityAction
 import nl.planernl.unraider.data.PhysicalDiskInfo
 import nl.planernl.unraider.data.ServerConfig
@@ -29,6 +35,7 @@ import nl.planernl.unraider.data.UiText
 import nl.planernl.unraider.data.Vm
 import nl.planernl.unraider.data.VmAction
 import nl.planernl.unraider.data.toUiText
+import nl.planernl.unraider.push.AlertWorker
 
 class MainViewModel(app: Application) : AndroidViewModel(app) {
 
@@ -40,8 +47,26 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     private var repo: UnraidRepository? = null
 
-    private val _dashboard = MutableStateFlow(Load<Dashboard>())
-    val dashboard = _dashboard.asStateFlow()
+    private val _server = MutableStateFlow(Load<ServerInfo>())
+    val server = _server.asStateFlow()
+
+    private val _metrics = MutableStateFlow(LiveMetrics())
+    val metrics = _metrics.asStateFlow()
+    private val _metricsError = MutableStateFlow<UiText?>(null)
+    val metricsError = _metricsError.asStateFlow()
+    private var metricsLoading = false
+
+    private val _shares = MutableStateFlow(Load<List<ShareInfo>>())
+    val shares = _shares.asStateFlow()
+
+    private val _plugins = MutableStateFlow(Load<List<PluginInfo>>())
+    val plugins = _plugins.asStateFlow()
+
+    private val _notifications = MutableStateFlow(Load<List<NotificationItem>>())
+    val notifications = _notifications.asStateFlow()
+
+    val pushEnabled: StateFlow<Boolean> = settings.pushEnabled
+        .stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
     private val _disks = MutableStateFlow(Load<DiskOverview>())
     val disks = _disks.asStateFlow()
@@ -75,7 +100,12 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     private fun resetData() {
-        _dashboard.value = Load()
+        _server.value = Load()
+        _metrics.value = LiveMetrics()
+        _metricsError.value = null
+        _shares.value = Load()
+        _plugins.value = Load()
+        _notifications.value = Load()
         _disks.value = Load()
         _smart.value = Load()
         _containers.value = Load()
@@ -113,6 +143,20 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch { settings.save(cfg) }
     }
 
+    /** Pushmeldingen aan/uit; plant of stopt de achtergrondcontrole. */
+    fun setPushEnabled(enabled: Boolean) {
+        val ctx = getApplication<Application>()
+        viewModelScope.launch {
+            settings.setPushEnabled(enabled)
+            if (enabled) {
+                AlertWorker.ensureChannel(ctx)
+                AlertWorker.schedule(ctx)
+            } else {
+                AlertWorker.cancel(ctx)
+            }
+        }
+    }
+
     // ---------- Laden ----------
 
     private fun <T> load(target: MutableStateFlow<Load<T>>, block: suspend (UnraidRepository) -> T) {
@@ -130,7 +174,28 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    fun refreshDashboard() = load(_dashboard) { it.dashboard() }
+    fun refreshServer() = load(_server) { it.serverInfo() }
+    fun refreshShares() = load(_shares) { it.shares() }
+    fun refreshPlugins() = load(_plugins) { it.plugins() }
+    fun refreshNotifications() = load(_notifications) { it.unreadNotifications() }
+
+    /** Haalt één meting op en voegt die toe aan het rollende venster. */
+    fun sampleMetrics() {
+        val r = repo ?: return
+        if (metricsLoading) return
+        metricsLoading = true
+        viewModelScope.launch {
+            try {
+                val s = r.metricsSample()
+                _metrics.update { m -> LiveMetrics((m.samples + s).takeLast(LiveMetrics.CAPACITY)) }
+                _metricsError.value = null
+            } catch (e: Exception) {
+                _metricsError.value = e.toUiText()
+            } finally {
+                metricsLoading = false
+            }
+        }
+    }
     fun refreshDisks() = load(_disks) { it.diskOverview() }
     fun loadSmart() = load(_smart) { it.physicalDisks() }
     fun refreshContainers() = load(_containers) { it.containers() }
@@ -186,7 +251,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         action(
             "array",
             UiText.Res(if (start) R.string.msg_array_starting else R.string.msg_array_stopping),
-            { refreshDisks(); refreshDashboard() },
+            { refreshDisks(); refreshServer() },
         ) { it.setArrayState(start) }
     }
 
@@ -199,5 +264,19 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
             ParityAction.CANCEL -> R.string.msg_parity_cancelled
         }
         action("parity", UiText.Res(msg), { refreshDisks() }) { it.parityAction(a) }
+    }
+
+    fun archiveNotification(n: NotificationItem) {
+        // Direct uit de lijst halen, dan voelt het snel
+        _notifications.update { l -> l.copy(data = l.data?.filterNot { it.id == n.id }) }
+        action(n.id, UiText.Res(R.string.msg_marked_read), { refreshNotifications(); refreshServer() }) {
+            it.archiveNotification(n.id)
+        }
+    }
+
+    fun archiveAllNotifications() {
+        action("notifications", UiText.Res(R.string.msg_all_marked_read), { refreshNotifications(); refreshServer() }) {
+            it.archiveAllNotifications()
+        }
     }
 }

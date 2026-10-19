@@ -7,18 +7,25 @@ of op Android 13+ via Instellingen → Apps → Unraider → Taal. "Systeemtaal"
 Teksten staan in `res/values/strings.xml` (Engels) en `res/values-nl/strings.xml` (Nederlands);
 een taal toevoegen is een extra `values-xx`-map plus een regel in `res/xml/locales_config.xml`.
 
-## Wat zit erin (v0.1)
+## Wat zit erin (v0.2)
+
+Rustige "server rack"-stijl: mat donkergrijs, oranje als accent, statusleds per schijf en container.
 
 | Tab | Inhoud |
 |---|---|
-| **Schijven** | Arraystatus, totale capaciteit, parity-check (starten/pauzeren/stoppen), per schijf: status, temperatuur, slapend of draaiend, vulgraad, I/O-fouten. Tik op een schijf voor details. Array starten/stoppen. |
-| **Overzicht** | Servernaam, versie, uptime, compacte schijvenlijst met statuslampjes, CPU, geheugen, ongelezen meldingen. |
-| **Docker** | Containers starten, stoppen, herstarten, pauzeren; WebUI openen; update-indicator. |
+| **Overzicht** (start) | Server en uptime, opslagsamenvatting, live CPU-grafiek (5 min), geheugen, temperaturen, netwerk. Bel voor meldingen, menu voor WebGUI en instellingen. Geen array- of parity-knoppen. |
+| **Opslag** | Gebruik per schijf als gesegmenteerde balk, array en pool met leds, temperatuur en vulgraad. Tik op een schijf voor details. Array start/stop en parity-check zitten achter de knop rechtsboven. |
+| **Shares** | Grootte, vrije ruimte en of de share de cache gebruikt. |
+| **Apps** | Docker-containers (met icoon, aan/uit-schakelaar, herstarten, WebUI) en plugins. |
 | **VM's** | Starten, afsluiten, herstarten, pauzeren, geforceerd uitzetten. |
-| **WebGUI** | De gewone Unraid-webinterface als vangnet voor alles wat nog niet native in de app zit. |
+| **Meldingen** | De meldingen uit het belletje van de webGUI, als gelezen markeren. |
 
-Statuskleuren: groen = in orde, grijs = slaapt, oranje = waarschuwing, rood = kritiek.
-Een schijf krijgt een waarschuwing bij een afwijkende status, hoge temperatuur, I/O-fouten of ≥ 90% vol.
+**Pushmeldingen:** zet ze aan onder Instellingen. De app kijkt elke 15 minuten (het minimum van Android)
+of er nieuwe Unraid-waarschuwingen of schijfproblemen zijn. Dat werkt alleen als Tailscale verbonden is.
+
+**Icoontjes:** Docker-icoontjes komen uit de container-templates. De API levert geen plugin-icoontjes;
+de app probeert ze van je server te halen met de inlogsessie van het WebGUI-tabblad. Log daar dus één keer in.
+Lukt het niet, dan zie je een standaardicoon.
 
 ### Slapende schijven blijven slapen
 
@@ -98,8 +105,9 @@ app/src/main/java/nl/planernl/unraider/
 │   ├── UnraidRepository.kt  alle queries en acties
 │   ├── Models.kt            datamodellen, gezondheidsregels, opmaak
 │   └── SettingsStore.kt     adres + API key (DataStore)
+├── push/AlertWorker.kt      pushmeldingen (WorkManager)
 └── ui/
-    ├── MainViewModel.kt     laden, acties, meldingen
+    ├── MainViewModel.kt     laden, acties, live metingen
     ├── Components.kt        kaarten, balken, dialogen, auto-verversen
     ├── theme/Theme.kt
     └── screens/             Schijven, Overzicht, Docker, VM's, WebGUI, Instellingen
@@ -113,3 +121,5 @@ Docker-logs, shares en meerdere servers.
 
 ---
 PlanerNL
+
+Lettertype: Barlow (SIL Open Font License, zie `licenses/Barlow-OFL.txt`).

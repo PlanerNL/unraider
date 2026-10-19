@@ -1,9 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Unraider</string>
-    <string name="tab_disks">Schijven</string>
     <string name="tab_overview">Overzicht</string>
-    <string name="tab_docker">Docker</string>
     <string name="tab_vms">VM\'s</string>
     <string name="tab_webgui">WebGUI</string>
     <string name="settings">Instellingen</string>
@@ -11,13 +9,11 @@
     <string name="unknown">Onbekend</string>
     <string name="yes">Ja</string>
     <string name="more">Meer</string>
-    <string name="less">Minder</string>
     <string name="show">Tonen</string>
     <string name="hide">Verbergen</string>
     <string name="save">Opslaan</string>
     <string name="refresh_failed">Verversen mislukt: %1$s</string>
     <string name="updated_at">Bijgewerkt om %1$s</string>
-    <string name="updated_every">Bijgewerkt om %1$s · ververst elke %2$d s</string>
     <string name="action_retry">Opnieuw proberen</string>
     <string name="action_cancel">Annuleren</string>
     <string name="action_continue">Doorgaan</string>
@@ -26,7 +22,6 @@
     <string name="action_restart">Herstarten</string>
     <string name="action_pause">Pauzeren</string>
     <string name="action_resume">Hervatten</string>
-    <string name="action_shutdown">Afsluiten</string>
     <string name="action_force_off">Geforceerd uitzetten</string>
     <string name="err_access_denied">Toegang geweigerd (HTTP %1$d). Controleer de API key.</string>
     <string name="err_no_api">Geen API gevonden op %1$s. Draait Unraid 7.2 of nieuwer?</string>
@@ -98,7 +93,6 @@
     <string name="array_state_too_many_missing">Te veel ontbrekende schijven</string>
     <string name="array_state_new_disk_too_small">Nieuwe schijf te klein</string>
     <string name="array_state_no_data_disks">Geen dataschijven</string>
-    <string name="array_state_pill">Array: %1$s</string>
     <string name="parity_never_run">Nog nooit uitgevoerd</string>
     <string name="parity_running">Bezig</string>
     <string name="parity_running_pct">Bezig (%1$d%%)</string>
@@ -109,25 +103,19 @@
     <string name="parity_failed">Mislukt</string>
     <string name="parity_check">Parity-check</string>
     <string name="parity_line">Parity-check: %1$s</string>
-    <string name="parity_last">Laatste: %1$s</string>
-    <string name="no_errors">geen fouten</string>
     <string name="parity_dialog_title">Parity-check starten</string>
-    <string name="parity_dialog_text">Alleen controleren telt fouten maar past niets aan. Met correcties schrijft Unraid afwijkingen weg naar de parity. Een check duurt meestal uren en maakt de server trager.</string>
     <string name="parity_with_corrections">Met correcties</string>
     <string name="parity_check_only">Alleen controleren</string>
     <string name="parity_cancel_title">Parity-check annuleren?</string>
     <string name="parity_cancel_text">De voortgang gaat verloren; een nieuwe check begint weer vooraan.</string>
     <string name="parity_cancel_confirm">Check annuleren</string>
-    <string name="section_parity">Parity</string>
     <string name="section_array">Array</string>
-    <string name="section_cache">Cache / pools</string>
     <string name="array_start_title">Array starten?</string>
     <string name="array_stop_title">Array stoppen?</string>
     <string name="array_start_text">De array en de shares worden gestart. Docker en VM\'s met autostart starten mee.</string>
     <string name="array_stop_text">Alle Docker-containers en VM\'s die de array gebruiken worden gestopt en de shares zijn niet meer bereikbaar.</string>
     <string name="array_start_button">Array starten</string>
     <string name="array_stop_button">Array stoppen</string>
-    <string name="used_of">%1$s van %2$s gebruikt</string>
     <string name="all_ok">Alles in orde</string>
     <string name="size_used">%1$s gebruikt</string>
     <string name="size_free">%1$s vrij</string>
@@ -146,7 +134,6 @@
     <string name="label_reads">Gelezen</string>
     <string name="label_writes">Geschreven</string>
     <string name="label_io_errors">I/O-fouten</string>
-    <string name="label_slot">Slot</string>
     <string name="label_smart_status">SMART-status</string>
     <string name="label_model">Model</string>
     <string name="label_serial">Serienummer</string>
@@ -158,18 +145,11 @@
     <string name="smart_refetch">Opnieuw ophalen</string>
     <string name="fetched_at">Opgehaald om %1$s</string>
     <string name="unassigned">Niet toegewezen / boot</string>
-    <string name="storage">Opslag</string>
-    <string name="system">Systeem</string>
     <string name="memory">Geheugen</string>
-    <string name="notifications_unread">Meldingen (ongelezen)</string>
-    <string name="notif_info">%1$d info</string>
     <string name="uptime_days">aan sinds %1$d d %2$d u</string>
     <string name="uptime_hours">aan sinds %1$d u %2$d min</string>
-    <string name="filter_all">Alle (%1$d)</string>
-    <string name="filter_running">Actief (%1$d)</string>
     <string name="container_stop_title">%1$s stoppen?</string>
     <string name="container_stop_text">De container wordt gestopt. Diensten die ervan afhangen zijn dan niet bereikbaar.</string>
-    <string name="update_badge">update</string>
     <string name="open_webui">WebUI openen</string>
     <string name="autostart_on">Autostart: aan</string>
     <string name="autostart_off">Autostart: uit</string>
@@ -202,14 +182,78 @@
     <string name="setup_footer">De API key wordt alleen op dit toestel bewaard. Gebruikt je server HTTPS met een eigen certificaat, vul dan het http-adres in; via Tailscale is dat veilig.</string>
     <string name="language">Taal</string>
     <string name="language_system">Systeemtaal</string>
+    <string name="tab_storage">Opslag</string>
+    <string name="tab_shares">Shares</string>
+    <string name="tab_apps">Apps</string>
+    <string name="back">Terug</string>
+    <string name="not_reachable">Server niet bereikbaar</string>
+    <string name="array_on_server">Array %1$s op %2$s</string>
+    <string name="array_controls">Array-bediening</string>
+    <string name="section_pool">Pool</string>
+    <string name="section_connection">Verbinding</string>
+    <string name="stat_used">Gebruikt</string>
+    <string name="stat_free">Vrij</string>
+    <string name="stat_hottest">Warmste</string>
+    <string name="a11y_disk_bar">Gebruik per dataschijf; de breedte van elk stuk is de grootte van de schijf</string>
+    <string name="a11y_cpu_chart">CPU-gebruik over de laatste 5 minuten, nu %1$d procent</string>
+    <string name="a11y_toggle">%1$s aan of uit zetten</string>
+    <string name="a11y_open_in_webgui">%1$s openen in de WebGUI</string>
+    <string name="chart_5min_ago">5 min geleden</string>
+    <string name="chart_now">nu</string>
+    <string name="mem_of">%1$s van %2$s</string>
+    <string name="temperatures">Temperaturen</string>
+    <string name="motherboard">Moederbord</string>
+    <string name="hottest_disk">Warmste schijf</string>
+    <string name="network">Netwerk</string>
+    <string name="net_in">Binnenkomend</string>
+    <string name="net_out">Uitgaand</string>
+    <string name="live_failed">Live gegevens niet beschikbaar: %1$s</string>
+    <string name="parity_check_text">Telt fouten zonder iets aan te passen. Een check duurt meestal uren en maakt de server trager.</string>
+    <string name="parity_correct_text">Unraid schrijft afwijkingen weg naar de parity. Doe dit alleen als je weet waarom er fouten zijn. Een check duurt meestal uren.</string>
+    <string name="shares_size_location">Grootte en locatie</string>
+    <string name="shares_bar_hint">Balken zijn ten opzichte van de grootste share.</string>
+    <string name="share_uses_cache">Gebruikt cache</string>
+    <string name="share_array_only">Alleen array</string>
+    <string name="no_shares">Geen shares gevonden.</string>
+    <string name="apps_docker">Docker</string>
+    <string name="apps_plugins">Plugins</string>
+    <string name="apps_docker_summary">%1$d van %2$d containers actief</string>
+    <string name="update_available">Update beschikbaar</string>
+    <string name="no_plugins">Geen plugins gevonden, of deze Unraid-versie kan ze niet tonen.</string>
+    <string name="plugins_icon_hint">Plugin-icoontjes verschijnen nadat je één keer in de WebGUI bent ingelogd.</string>
+    <string name="vms_summary">%1$d van %2$d actief</string>
+    <string name="notifications_title">Meldingen</string>
+    <string name="notifications_none">Geen ongelezen meldingen</string>
+    <string name="notifications_mark_all">Alles gelezen</string>
+    <string name="notifications_mark_read">Markeren als gelezen</string>
+    <string name="msg_marked_read">Gemarkeerd als gelezen</string>
+    <string name="msg_all_marked_read">Alle meldingen gemarkeerd als gelezen</string>
+    <string name="section_push">Meldingen op deze telefoon</string>
+    <string name="push_title">Pushmeldingen</string>
+    <string name="push_text">Controleert elke 15 minuten op nieuwe Unraid-waarschuwingen en schijfproblemen. Werkt alleen als Tailscale verbonden is.</string>
+    <string name="push_channel_name">Serverwaarschuwingen</string>
+    <string name="push_channel_description">Unraid-waarschuwingen en schijfproblemen</string>
+    <string name="push_disk_title">%1$s vraagt aandacht</string>
 
-    <plurals name="disks_count">
-        <item quantity="one">%d schijf</item>
-        <item quantity="other">%d schijven</item>
+    <plurals name="shares_summary">
+        <item quantity="one">%1$d share, samen %2$s</item>
+        <item quantity="other">%1$d shares, samen %2$s</item>
     </plurals>
-    <plurals name="sleeping_count">
-        <item quantity="one">%d slaapt</item>
-        <item quantity="other">%d slapen</item>
+    <plurals name="updates_available">
+        <item quantity="one">%d update beschikbaar</item>
+        <item quantity="other">%d updates beschikbaar</item>
+    </plurals>
+    <plurals name="plugins_installed">
+        <item quantity="one">%d plugin geïnstalleerd</item>
+        <item quantity="other">%d plugins geïnstalleerd</item>
+    </plurals>
+    <plurals name="notifications_unread">
+        <item quantity="one">%d ongelezen</item>
+        <item quantity="other">%d ongelezen</item>
+    </plurals>
+    <plurals name="push_more">
+        <item quantity="one">En nog %d melding</item>
+        <item quantity="other">En nog %d meldingen</item>
     </plurals>
     <plurals name="warnings_count">
         <item quantity="one">%d waarschuwing</item>
@@ -222,9 +266,5 @@
     <plurals name="problem_io_errors">
         <item quantity="one">%d I/O-fout</item>
         <item quantity="other">%d I/O-fouten</item>
-    </plurals>
-    <plurals name="notif_alerts">
-        <item quantity="one">%d alarm</item>
-        <item quantity="other">%d alarmen</item>
     </plurals>
 </resources>

@@ -1,9 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Unraider</string>
-    <string name="tab_disks">Disks</string>
     <string name="tab_overview">Overview</string>
-    <string name="tab_docker">Docker</string>
     <string name="tab_vms">VMs</string>
     <string name="tab_webgui">WebGUI</string>
     <string name="settings">Settings</string>
@@ -11,13 +9,11 @@
     <string name="unknown">Unknown</string>
     <string name="yes">Yes</string>
     <string name="more">More</string>
-    <string name="less">Less</string>
     <string name="show">Show</string>
     <string name="hide">Hide</string>
     <string name="save">Save</string>
     <string name="refresh_failed">Refresh failed: %1$s</string>
     <string name="updated_at">Updated at %1$s</string>
-    <string name="updated_every">Updated at %1$s · refreshes every %2$d s</string>
     <string name="action_retry">Try again</string>
     <string name="action_cancel">Cancel</string>
     <string name="action_continue">Continue</string>
@@ -26,7 +22,6 @@
     <string name="action_restart">Restart</string>
     <string name="action_pause">Pause</string>
     <string name="action_resume">Resume</string>
-    <string name="action_shutdown">Shut down</string>
     <string name="action_force_off">Force off</string>
     <string name="err_access_denied">Access denied (HTTP %1$d). Check the API key.</string>
     <string name="err_no_api">No API found at %1$s. Is the server running Unraid 7.2 or newer?</string>
@@ -98,7 +93,6 @@
     <string name="array_state_too_many_missing">Too many missing disks</string>
     <string name="array_state_new_disk_too_small">New disk too small</string>
     <string name="array_state_no_data_disks">No data disks</string>
-    <string name="array_state_pill">Array: %1$s</string>
     <string name="parity_never_run">Never run</string>
     <string name="parity_running">Running</string>
     <string name="parity_running_pct">Running (%1$d%%)</string>
@@ -109,25 +103,19 @@
     <string name="parity_failed">Failed</string>
     <string name="parity_check">Parity check</string>
     <string name="parity_line">Parity check: %1$s</string>
-    <string name="parity_last">Last: %1$s</string>
-    <string name="no_errors">no errors</string>
     <string name="parity_dialog_title">Start parity check</string>
-    <string name="parity_dialog_text">Check only counts errors and changes nothing. Write corrections updates parity where it differs. A check usually takes hours and slows the server down.</string>
     <string name="parity_with_corrections">Write corrections</string>
     <string name="parity_check_only">Check only</string>
     <string name="parity_cancel_title">Cancel parity check?</string>
     <string name="parity_cancel_text">Progress will be lost; a new check starts over from the beginning.</string>
     <string name="parity_cancel_confirm">Cancel check</string>
-    <string name="section_parity">Parity</string>
     <string name="section_array">Array</string>
-    <string name="section_cache">Cache / pools</string>
     <string name="array_start_title">Start array?</string>
     <string name="array_stop_title">Stop array?</string>
     <string name="array_start_text">The array and shares will start. Docker containers and VMs set to autostart will start too.</string>
     <string name="array_stop_text">All Docker containers and VMs that use the array will be stopped, and the shares will be unavailable.</string>
     <string name="array_start_button">Start array</string>
     <string name="array_stop_button">Stop array</string>
-    <string name="used_of">%1$s of %2$s used</string>
     <string name="all_ok">All good</string>
     <string name="size_used">%1$s used</string>
     <string name="size_free">%1$s free</string>
@@ -146,7 +134,6 @@
     <string name="label_reads">Reads</string>
     <string name="label_writes">Writes</string>
     <string name="label_io_errors">I/O errors</string>
-    <string name="label_slot">Slot</string>
     <string name="label_smart_status">SMART status</string>
     <string name="label_model">Model</string>
     <string name="label_serial">Serial number</string>
@@ -158,18 +145,11 @@
     <string name="smart_refetch">Fetch again</string>
     <string name="fetched_at">Fetched at %1$s</string>
     <string name="unassigned">Unassigned / boot</string>
-    <string name="storage">Storage</string>
-    <string name="system">System</string>
     <string name="memory">Memory</string>
-    <string name="notifications_unread">Notifications (unread)</string>
-    <string name="notif_info">%1$d info</string>
     <string name="uptime_days">up %1$d d %2$d h</string>
     <string name="uptime_hours">up %1$d h %2$d min</string>
-    <string name="filter_all">All (%1$d)</string>
-    <string name="filter_running">Running (%1$d)</string>
     <string name="container_stop_title">Stop %1$s?</string>
     <string name="container_stop_text">The container will be stopped. Services that depend on it will be unavailable.</string>
-    <string name="update_badge">update</string>
     <string name="open_webui">Open WebUI</string>
     <string name="autostart_on">Autostart: on</string>
     <string name="autostart_off">Autostart: off</string>
@@ -202,14 +182,78 @@
     <string name="setup_footer">The API key is only stored on this device. If your server uses HTTPS with a self-signed certificate, enter the http address instead; over Tailscale that is safe.</string>
     <string name="language">Language</string>
     <string name="language_system">System default</string>
+    <string name="tab_storage">Storage</string>
+    <string name="tab_shares">Shares</string>
+    <string name="tab_apps">Apps</string>
+    <string name="back">Back</string>
+    <string name="not_reachable">Server not reachable</string>
+    <string name="array_on_server">Array %1$s on %2$s</string>
+    <string name="array_controls">Array controls</string>
+    <string name="section_pool">Pool</string>
+    <string name="section_connection">Connection</string>
+    <string name="stat_used">Used</string>
+    <string name="stat_free">Free</string>
+    <string name="stat_hottest">Hottest</string>
+    <string name="a11y_disk_bar">Usage per data disk; the width of each piece is the disk size</string>
+    <string name="a11y_cpu_chart">CPU usage over the last 5 minutes, now %1$d percent</string>
+    <string name="a11y_toggle">Turn %1$s on or off</string>
+    <string name="a11y_open_in_webgui">Open %1$s in the WebGUI</string>
+    <string name="chart_5min_ago">5 min ago</string>
+    <string name="chart_now">now</string>
+    <string name="mem_of">%1$s of %2$s</string>
+    <string name="temperatures">Temperatures</string>
+    <string name="motherboard">Motherboard</string>
+    <string name="hottest_disk">Hottest disk</string>
+    <string name="network">Network</string>
+    <string name="net_in">Incoming</string>
+    <string name="net_out">Outgoing</string>
+    <string name="live_failed">Live data unavailable: %1$s</string>
+    <string name="parity_check_text">Counts errors without changing anything. A check usually takes hours and slows the server down.</string>
+    <string name="parity_correct_text">Unraid writes any differences to parity. Use this only if you know why there are errors. A check usually takes hours.</string>
+    <string name="shares_size_location">Size and location</string>
+    <string name="shares_bar_hint">Bars are relative to the largest share.</string>
+    <string name="share_uses_cache">Uses cache</string>
+    <string name="share_array_only">Array only</string>
+    <string name="no_shares">No shares found.</string>
+    <string name="apps_docker">Docker</string>
+    <string name="apps_plugins">Plugins</string>
+    <string name="apps_docker_summary">%1$d of %2$d containers running</string>
+    <string name="update_available">Update available</string>
+    <string name="no_plugins">No plugins found, or this Unraid version cannot list them.</string>
+    <string name="plugins_icon_hint">Plugin icons appear after you have logged in once in the WebGUI.</string>
+    <string name="vms_summary">%1$d of %2$d running</string>
+    <string name="notifications_title">Notifications</string>
+    <string name="notifications_none">No unread notifications</string>
+    <string name="notifications_mark_all">Mark all read</string>
+    <string name="notifications_mark_read">Mark as read</string>
+    <string name="msg_marked_read">Marked as read</string>
+    <string name="msg_all_marked_read">All notifications marked as read</string>
+    <string name="section_push">Notifications on this phone</string>
+    <string name="push_title">Push notifications</string>
+    <string name="push_text">Checks every 15 minutes for new Unraid alerts and disk problems. Only works while Tailscale is connected.</string>
+    <string name="push_channel_name">Server alerts</string>
+    <string name="push_channel_description">Unraid warnings and disk problems</string>
+    <string name="push_disk_title">%1$s needs attention</string>
 
-    <plurals name="disks_count">
-        <item quantity="one">%d disk</item>
-        <item quantity="other">%d disks</item>
+    <plurals name="shares_summary">
+        <item quantity="one">%1$d share, %2$s in total</item>
+        <item quantity="other">%1$d shares, %2$s in total</item>
     </plurals>
-    <plurals name="sleeping_count">
-        <item quantity="one">%d asleep</item>
-        <item quantity="other">%d asleep</item>
+    <plurals name="updates_available">
+        <item quantity="one">%d update available</item>
+        <item quantity="other">%d updates available</item>
+    </plurals>
+    <plurals name="plugins_installed">
+        <item quantity="one">%d plugin installed</item>
+        <item quantity="other">%d plugins installed</item>
+    </plurals>
+    <plurals name="notifications_unread">
+        <item quantity="one">%d unread</item>
+        <item quantity="other">%d unread</item>
+    </plurals>
+    <plurals name="push_more">
+        <item quantity="one">And %d more alert</item>
+        <item quantity="other">And %d more alerts</item>
     </plurals>
     <plurals name="warnings_count">
         <item quantity="one">%d warning</item>
@@ -222,9 +266,5 @@
     <plurals name="problem_io_errors">
         <item quantity="one">%d I/O error</item>
         <item quantity="other">%d I/O errors</item>
-    </plurals>
-    <plurals name="notif_alerts">
-        <item quantity="one">%d alert</item>
-        <item quantity="other">%d alerts</item>
     </plurals>
 </resources>
